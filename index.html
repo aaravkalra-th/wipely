@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Wipely — Clean that sticks with you</title>
+<style>
+  :root{
+    --bg1:#f4f5f7;
+    --bg2:#e7e9ee;
+    --ink:#1d1d1f;
+    --muted:#6e6e73;
+    --line:rgba(0,0,0,.10);
+    --card:rgba(255,255,255,.72);
+    --accent:#0a84ff;
+    --accent-soft:#eaf3ff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 800px at 70% -10%, #ffffff 0%, rgba(255,255,255,0) 55%),
+      radial-gradient(1000px 900px at 15% 110%, #eef1f6 0%, rgba(238,241,246,0) 60%),
+      linear-gradient(180deg,var(--bg1),var(--bg2));
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{position:fixed;inset:0}
+  canvas{display:block;touch-action:none}
+
+  /* ---- Top brand ---- */
+  .brand{
+    position:fixed;left:32px;top:26px;z-index:5;
+    display:flex;align-items:center;gap:11px;user-select:none;
+  }
+  .brand .mark{
+    width:34px;height:34px;border-radius:50%;
+    background:radial-gradient(circle at 32% 30%,#fff,#dfe3ea 60%,#c7ccd6);
+    box-shadow:0 1px 2px rgba(0,0,0,.15),inset 0 0 0 3px rgba(255,255,255,.6),inset 0 0 0 4.5px #cfd4dd;
+    position:relative;
+  }
+  .brand .mark::after{
+    content:"";position:absolute;inset:0;margin:auto;width:9px;height:9px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#6bb8ff,#0a84ff);
+  }
+  .brand .name{font-weight:600;font-size:20px;letter-spacing:-.02em}
+  .brand .name small{display:block;font-weight:400;font-size:11.5px;color:var(--muted);letter-spacing:.01em;margin-top:1px}
+
+  /* ---- Headline (right) ---- */
+  .lede{
+    position:fixed;right:34px;top:30px;z-index:5;max-width:330px;text-align:right;user-select:none;
+  }
+  .lede h1{
+    margin:0;font-size:30px;line-height:1.08;font-weight:600;letter-spacing:-.03em;
+  }
+  .lede p{margin:12px 0 0;font-size:14px;line-height:1.5;color:var(--muted)}
+  .lede .stat{
+    margin-top:14px;display:inline-flex;align-items:baseline;gap:7px;
+    padding:7px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  }
+  .lede .stat b{font-size:15px;letter-spacing:-.01em}
+  .lede .stat span{font-size:12px;color:var(--muted)}
+
+  /* ---- Bottom control dock ---- */
+  .dock{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:6;
+    display:flex;flex-direction:column;align-items:center;gap:12px;user-select:none;
+  }
+  .seg{
+    display:flex;background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:4px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    box-shadow:0 6px 24px rgba(20,25,40,.10);
+  }
+  .seg button{
+    appearance:none;border:0;background:transparent;color:var(--muted);
+    font:inherit;font-size:13px;font-weight:500;padding:8px 15px;border-radius:999px;cursor:pointer;
+    transition:.2s;white-space:nowrap;
+  }
+  .seg button:hover{color:var(--ink)}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+  .seg .div{width:1px;background:var(--line);margin:5px 3px}
+
+  .actions{display:flex;gap:10px}
+  .pill{
+    appearance:none;border:1px solid var(--line);cursor:pointer;font:inherit;font-size:13px;font-weight:500;
+    padding:10px 17px;border-radius:999px;background:var(--card);color:var(--ink);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    box-shadow:0 6px 24px rgba(20,25,40,.10);transition:.18s;display:flex;align-items:center;gap:8px;
+  }
+  .pill:hover{transform:translateY(-1px)}
+  .pill.on{background:var(--accent);color:#fff;border-color:transparent}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55}
+  .pill.on .dot{opacity:1}
+
+  .hint{font-size:12px;color:var(--muted);letter-spacing:.01em}
+  .hint kbd{
+    font:inherit;font-size:11px;background:#fff;border:1px solid var(--line);border-bottom-width:2px;
+    border-radius:6px;padding:1px 6px;color:var(--ink)
+  }
+
+  .caption{
+    position:fixed;left:32px;bottom:28px;z-index:5;max-width:210px;user-select:none;
+    font-size:12.5px;line-height:1.5;color:var(--muted);
+  }
+  .caption b{color:var(--ink);font-weight:600}
+
+  .loader{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;
+    color:var(--muted);font-size:13px;letter-spacing:.02em;transition:opacity .5s;background:transparent;
+  }
+  .loader.hide{opacity:0;pointer-events:none}
+  .spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);
+    margin-right:10px;animation:sp 0.8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  @media (max-width:760px){
+    .lede{left:24px;right:24px;top:auto;bottom:150px;max-width:none;text-align:left}
+    .lede h1{font-size:24px}
+    .caption{display:none}
+    .brand .name small{display:none}
+    .lede .stat{margin-top:12px}
+  }
+</style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div class="brand">
+    <div class="mark"></div>
+    <div class="name">Wipely<small>Clean that sticks with you</small></div>
+  </div>
+
+  <div class="lede">
+    <h1>A wipe dispenser<br>for the back of<br>your phone.</h1>
+    <p>Slim and flat — sticks to the back of your phone. Peel a sheet, clean your screen, flip out the stand.</p>
+    <div class="stat"><b>25×</b><span>dirtier than a toilet seat — that's your phone</span></div>
+  </div>
+
+  <div class="dock">
+    <div class="actions">
+      <button class="pill" id="btnRing"><span class="dot"></span>Flip-out stand</button>
+      <button class="pill" id="btnWipe"><span class="dot"></span>Peel a sheet</button>
+    </div>
+    <div class="seg" id="variants">
+      <button data-v="0">Ultra-Slim</button>
+      <div class="div"></div>
+      <button data-v="1" class="on">Standard</button>
+      <div class="div"></div>
+      <button data-v="2">Moisture-Lock</button>
+    </div>
+    <div class="hint">Drag to rotate · scroll to zoom · <kbd>R</kbd> reset</div>
+  </div>
+
+  <div class="caption">
+    <b>How it sticks:</b> adhesive back mounts flush to any case — thin as a card, like a MagSafe wallet.
+  </div>
+
+  <div class="loader" id="loader"><span class="spin"></span>Preparing Wipely…</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const app = document.getElementById('app');
+
+// ---------- Renderer ----------
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+app.appendChild(renderer.domElement);
+
+// ---------- Scene / Camera ----------
+const scene = new THREE.Scene();
+// Everything that is physically bolted together lives in one rigid group,
+// so the phone + puck rotate as a single object (they are glued, after all).
+const assembly = new THREE.Group();
+scene.add(assembly);
+
+const camera = new THREE.PerspectiveCamera(32, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.set(2.4, 1.7, 5.2);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+// ---------- Lights ----------
+const key = new THREE.DirectionalLight(0xffffff, 2.3);
+key.position.set(4, 7, 5);
+key.castShadow = true;
+key.shadow.mapSize.set(2048,2048);
+key.shadow.camera.near = 1; key.shadow.camera.far = 25;
+key.shadow.camera.left=-6; key.shadow.camera.right=6; key.shadow.camera.top=6; key.shadow.camera.bottom=-6;
+key.shadow.bias = -0.0002;
+key.shadow.radius = 8;
+scene.add(key);
+
+const rim = new THREE.DirectionalLight(0xbcd4ff, 1.1);
+rim.position.set(-5, 3, -4);
+scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xdfe3ea, 0.6));
+
+// ---------- Ground shadow ----------
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(40,40),
+  new THREE.ShadowMaterial({ opacity:0.16 })
+);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -1.55;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ---------- Controls ----------
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 3.2;
+controls.maxDistance = 8;
+controls.enablePan = false;
+controls.minPolarAngle = 0.35;
+controls.maxPolarAngle = Math.PI/2 + 0.15;
+controls.target.set(0, 0.28, 0);
+const HOME = { pos: camera.position.clone(), tgt: controls.target.clone() };
+
+// ---------- Materials ----------
+const matPhone = new THREE.MeshPhysicalMaterial({ color:0x1c1c1e, metalness:0.55, roughness:0.42, clearcoat:0.6, clearcoatRoughness:0.35 });
+const matGlass = new THREE.MeshPhysicalMaterial({ color:0x0a0a0c, metalness:0.2, roughness:0.08, clearcoat:1, clearcoatRoughness:0.06 });
+const matAlu   = new THREE.MeshPhysicalMaterial({ color:0xe6e9ee, metalness:0.42, roughness:0.44, clearcoat:0.4, clearcoatRoughness:0.28 });
+const matAluDk = new THREE.MeshPhysicalMaterial({ color:0xcfd3da, metalness:0.85, roughness:0.3, clearcoat:0.6, clearcoatRoughness:0.2 });
+const matSeam  = new THREE.MeshStandardMaterial({ color:0x9aa0aa, metalness:0.6, roughness:0.5 });
+const matWipe  = new THREE.MeshPhysicalMaterial({ color:0xfbfbfd, metalness:0, roughness:0.95, sheen:0.6, sheenRoughness:0.7, sheenColor:0xffffff });
+const matLens  = new THREE.MeshPhysicalMaterial({ color:0x141418, metalness:0.4, roughness:0.15, clearcoat:1 });
+
+// ---------- Logo texture ----------
+function logoTexture(){
+  const c = document.createElement('canvas'); c.width=c.height=512;
+  const g = c.getContext('2d');
+  const grd = g.createRadialGradient(256,220,10,256,256,300);
+  grd.addColorStop(0,'#ffffff'); grd.addColorStop(1,'#e6e9ee');
+  g.fillStyle=grd; g.beginPath(); g.arc(256,256,256,0,Math.PI*2); g.fill();
+  g.strokeStyle='rgba(0,0,0,.10)'; g.lineWidth=10; g.beginPath(); g.arc(256,256,232,0,Math.PI*2); g.stroke();
+  // droplet dot
+  g.fillStyle='#0a84ff';
+  g.beginPath(); g.arc(256,205,26,0,Math.PI*2); g.fill();
+  g.fillStyle='#1d1d1f'; g.font='600 74px -apple-system,Segoe UI,Roboto,Arial';
+  g.textAlign='center'; g.textBaseline='middle';
+  g.fillText('Wipely',256,300);
+  const t = new THREE.CanvasTexture(c); t.anisotropy=8; t.colorSpace=THREE.SRGBColorSpace;
+  return t;
+}
+
+// ---------- Rounded-disc lathe profile ----------
+function discProfile(R, h, r){
+  const pts=[]; const seg=6;
+  pts.push(new THREE.Vector2(0, h));
+  // top rim corner (R-r,h) -> (R,h-r)
+  for(let i=0;i<=seg;i++){const a=Math.PI/2 - (i/seg)*(Math.PI/2); pts.push(new THREE.Vector2((R-r)+Math.cos(a)*r, (h-r)+Math.sin(a)*r));}
+  // bottom rim corner (R,-h+r)->(R-r,-h)
+  for(let i=0;i<=seg;i++){const a=0 - (i/seg)*(Math.PI/2); pts.push(new THREE.Vector2((R-r)+Math.cos(a)*r, (-h+r)+Math.sin(a)*r));}
+  pts.push(new THREE.Vector2(0,-h));
+  return pts;
+}
+
+// ===================================================================
+//  PHONE
+// ===================================================================
+const phone = new THREE.Group();
+
+function roundedBox(w,h,d,r){
+  const shape = new THREE.Shape();
+  const x=-w/2,y=-h/2;
+  shape.moveTo(x+r,y);
+  shape.lineTo(x+w-r,y); shape.quadraticCurveTo(x+w,y,x+w,y+r);
+  shape.lineTo(x+w,y+h-r); shape.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  shape.lineTo(x+r,y+h); shape.quadraticCurveTo(x,y+h,x,y+h-r);
+  shape.lineTo(x,y+r); shape.quadraticCurveTo(x,y,x+r,y);
+  const geo = new THREE.ExtrudeGeometry(shape,{depth:d,bevelEnabled:true,bevelThickness:0.03,bevelSize:0.03,bevelSegments:4,steps:1});
+  geo.translate(0,0,-d/2); geo.computeVertexNormals();
+  return geo;
+}
+const PW=1.55, PH=3.15, PD=0.17;
+const body = new THREE.Mesh(roundedBox(PW,PH,PD,0.30), matPhone);
+body.castShadow = true; body.receiveShadow = true;
+phone.add(body);
+
+// screen (front, facing -Z)
+const screen = new THREE.Mesh(roundedBox(PW-0.14,PH-0.14,0.02,0.26), matGlass);
+screen.position.z = -PD/2-0.005;
+phone.add(screen);
+
+// camera module (on back, top-left)
+const camPlate = new THREE.Mesh(roundedBox(0.72,0.72,0.05,0.22), matPhone);
+camPlate.position.set(-PW/2+0.55, PH/2-0.55, PD/2+0.02);
+phone.add(camPlate);
+for(const [dx,dy] of [[-0.13,0.13],[0.13,-0.13]]){
+  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.09,32), matLens);
+  lens.rotation.x=Math.PI/2;
+  lens.position.set(-PW/2+0.55+dx, PH/2-0.55+dy, PD/2+0.05);
+  phone.add(lens);
+}
+
+phone.rotation.x = -Math.PI/2; // lay phone flat, back (+Z) now faces up (+Y)
+phone.position.y = -0.42;
+assembly.add(phone);
+
+const PHONE_BACK_Y = phone.position.y + PD/2; // world height of the flat back surface
+
+// ===================================================================
+//  WIPELY WALLET  (flat pad on the phone back; sheets peel off the top)
+// ===================================================================
+// Built in the same local frame as the phone (X = width, Y = up the phone,
+// Z = thickness), then laid flat so it sits flush on the back.
+const wallet = new THREE.Group();
+wallet.rotation.x = -Math.PI/2;
+
+const WAL_W = 1.18, WAL_H = 1.74, CORNER = 0.17;
+const T_PANEL = 0.028;                     // front / back shell thickness
+// variant = pad thickness = how many sheets it holds
+const VARIANTS = [0.06, 0.10, 0.15];       // ultra-slim / standard / moisture-lock
+let baseT = VARIANTS[1];
+
+// ---- wallet materials (soft-touch pad + tissue-thin sheets) ----
+const matWallet = new THREE.MeshPhysicalMaterial({
+  color:0x9db9e6, metalness:0.0, roughness:0.62,
+  sheen:0.6, sheenRoughness:0.5, sheenColor:0xdbe6ff,
+  clearcoat:0.15, clearcoatRoughness:0.5
+});
+const matSheet = new THREE.MeshPhysicalMaterial({
+  color:0xfcfdff, metalness:0, roughness:0.9,
+  sheen:0.5, sheenRoughness:0.7, sheenColor:0xffffff, side:THREE.DoubleSide
+});
+
+// flat rounded-rect sheet
+function roundedRectGeo(w,h,r){
+  const s=new THREE.Shape(); const x=-w/2,y=-h/2;
+  s.moveTo(x+r,y);
+  s.lineTo(x+w-r,y); s.quadraticCurveTo(x+w,y,x+w,y+r);
+  s.lineTo(x+w,y+h-r); s.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  s.lineTo(x+r,y+h); s.quadraticCurveTo(x,y+h,x,y+h-r);
+  s.lineTo(x,y+r); s.quadraticCurveTo(x,y,x+r,y);
+  return new THREE.ShapeGeometry(s, 16);
+}
+// front pocket outline with a scooped-down top opening
+function pocketShape(w,h,r,scoop){
+  const s=new THREE.Shape(); const x=-w/2,y=-h/2;
+  s.moveTo(x+r,y);
+  s.lineTo(x+w-r,y); s.quadraticCurveTo(x+w,y,x+w,y+r);
+  s.lineTo(x+w,y+h-r); s.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  s.quadraticCurveTo(0, y+h-scoop, x+r, y+h);          // dip the centre of the top edge
+  s.quadraticCurveTo(x,y+h,x,y+h-r);
+  s.lineTo(x,y+r); s.quadraticCurveTo(x,y,x+r,y);
+  return s;
+}
+function extrudeFlat(shape, depth){
+  const g = new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:true,bevelThickness:0.012,bevelSize:0.012,bevelSegments:2,steps:1});
+  g.translate(0,0,-depth/2); g.computeVertexNormals(); return g;
+}
+
+// back shell (adhesive side mounts to the phone)
+const backPanel = new THREE.Mesh(roundedBox(WAL_W, WAL_H, T_PANEL, CORNER), matWallet);
+backPanel.castShadow = backPanel.receiveShadow = true;
+wallet.add(backPanel);
+
+// stack of ultra-thin sheets sitting in the pocket, tops peeking through the scoop
+const NSHEET = 5;
+const FP_H = WAL_H - 0.16;                  // pocket a touch shorter than the back
+const sheetGeo = roundedRectGeo(WAL_W-0.22, FP_H+0.06, CORNER*0.7);
+const sheets = [];
+for(let i=0;i<NSHEET;i++){
+  const sh = new THREE.Mesh(sheetGeo, matSheet);
+  wallet.add(sh); sheets.push(sh);
+}
+
+// front pocket panel (scooped opening)
+const frontPanel = new THREE.Mesh(extrudeFlat(pocketShape(WAL_W, FP_H, CORNER, 0.26), T_PANEL), matWallet);
+frontPanel.position.y = -0.02;
+frontPanel.castShadow = frontPanel.receiveShadow = true;
+wallet.add(frontPanel);
+
+// small brand mark low on the pocket
+const brand = new THREE.Mesh(new THREE.CircleGeometry(0.115, 48),
+  new THREE.MeshStandardMaterial({ map:logoTexture(), transparent:true, metalness:0.0, roughness:0.6 }));
+brand.position.y = -0.56;
+wallet.add(brand);
+
+// pocket-mouth height (scoop centre) — where a pulled sheet emerges
+const MOUTH_Y = -0.02 + FP_H/2 - 0.13;
+
+// ---- pull sheet: the wipe you peel off the top, bent like limp tissue ----
+const PSW = WAL_W-0.26, PSL = 1.05;
+const pullGeo = new THREE.PlaneGeometry(PSW, PSL, 6, 22);
+const pullSheet = new THREE.Mesh(pullGeo, matSheet);
+pullSheet.castShadow = true;
+const ppos = pullGeo.attributes.position;
+const pbase = new Float32Array(ppos.count*3);
+for(let i=0;i<ppos.count;i++){ pbase[i*3]=ppos.getX(i); pbase[i*3+1]=ppos.getY(i); pbase[i*3+2]=ppos.getZ(i); }
+const pullPivot = new THREE.Group();
+pullPivot.add(pullSheet);
+wallet.add(pullPivot);
+
+// ---- fold-out stand: a leaf hinged at the bottom edge lifts out as a leg ----
+const stand = new THREE.Group();
+const standLeaf = new THREE.Mesh(roundedBox(WAL_W*0.82, WAL_H*0.42, 0.016, CORNER*0.8), matWallet);
+standLeaf.castShadow = true;
+standLeaf.position.y = WAL_H*0.19;          // extends up from the bottom hinge
+stand.add(standLeaf);
+wallet.add(stand);
+
+assembly.add(wallet);
+
+// seat the wallet flat on the phone back, centred a bit below the camera
+function placeWallet(){
+  wallet.position.set(0, PHONE_BACK_Y + baseT/2, 0.34);
+}
+placeWallet();
+
+// ===================================================================
+//  STATE + ANIMATION
+// ===================================================================
+const state = {
+  ring:   { on:false, v:0, t:0 },   // 0 folded .. 1 up
+  wipe:   { on:false, v:0, t:0 },
+  variant:{ cur:1, h:VARIANTS[1], target:VARIANTS[1] },
+  autorotate:true,
+};
+
+function lerp(a,b,t){ return a + (b-a)*t; }
+
+function updatePull(out){
+  // A sheet peeled up out of the pocket mouth; emerged length grows and the
+  // free end curls forward over the top edge like a limp tissue.
+  pullSheet.visible = out > 0.02;
+  if(!pullSheet.visible) return;
+  const len = PSL * lerp(0.12, 1, out);
+  const k = 2.35 / PSL;
+  for(let i=0;i<ppos.count;i++){
+    const bx = pbase[i*3], by = pbase[i*3+1];
+    const v = (by + PSL/2) / PSL;         // 0 = root (at mouth) .. 1 = free end
+    const s = v * len;
+    const a = k * s;
+    ppos.setXYZ(i, bx*(1 - 0.05*v), Math.sin(a)/k, (1 - Math.cos(a))/k);
+  }
+  ppos.needsUpdate = true;
+  pullGeo.computeVertexNormals();
+  pullPivot.position.set(0, MOUTH_Y, baseT/2 + 0.006);   // root at the pocket mouth
+  pullPivot.rotation.x = 0;
+}
+
+function tick(){
+  // variant thickness -> reseat everything on the new pad depth
+  state.variant.h = lerp(state.variant.h, state.variant.target, 0.16);
+  baseT = state.variant.h;
+  placeWallet();
+
+  // layer the shells + sheet stack across the current thickness
+  backPanel.position.z  = -baseT/2 + T_PANEL/2;
+  frontPanel.position.z =  baseT/2 - T_PANEL/2;
+  brand.position.z      =  baseT/2 + 0.004;
+  const innerBack = -baseT/2 + T_PANEL, innerFront = baseT/2 - T_PANEL;
+  for(let i=0;i<NSHEET;i++){
+    const f = NSHEET>1 ? i/(NSHEET-1) : 0;              // 0 back .. 1 front
+    sheets[i].position.set(0, -0.02 - f*0.008, lerp(innerBack+0.004, innerFront-0.004, f));
+  }
+
+  // fold-out stand hinged at the wallet's bottom edge, on the outer face
+  state.ring.v = lerp(state.ring.v, state.ring.on?1:0, 0.14);
+  stand.position.set(0, -WAL_H/2 + 0.05, baseT/2 + 0.003);
+  stand.rotation.x = state.ring.v * 1.2;      // folded flush -> lifts toward the viewer
+
+  // pull a sheet
+  state.wipe.v = lerp(state.wipe.v, state.wipe.on?1:0, 0.10);
+  updatePull(state.wipe.v);
+}
+
+// ===================================================================
+//  UI
+// ===================================================================
+const btnRing = document.getElementById('btnRing');
+const btnWipe = document.getElementById('btnWipe');
+btnRing.addEventListener('click', ()=>{ state.ring.on=!state.ring.on; btnRing.classList.toggle('on',state.ring.on); });
+btnWipe.addEventListener('click', ()=>{ state.wipe.on=!state.wipe.on; btnWipe.classList.toggle('on',state.wipe.on); });
+
+document.querySelectorAll('#variants button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#variants button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    const v = +b.dataset.v;
+    state.variant.cur = v;
+    state.variant.target = VARIANTS[v];
+  });
+});
+
+// interaction stops autorotate
+controls.addEventListener('start', ()=>{ state.autorotate=false; });
+
+window.addEventListener('keydown', e=>{
+  if(e.key==='r'||e.key==='R'){
+    camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt);
+    assembly.rotation.y = 0; state.autorotate=true;
+  }
+});
+
+// ===================================================================
+//  RESIZE + LOOP
+// ===================================================================
+function onResize(){
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+window.addEventListener('resize', onResize);
+
+const loader = document.getElementById('loader');
+let started=false;
+function loop(){
+  requestAnimationFrame(loop);
+  if(state.autorotate){ assembly.rotation.y += 0.0035; } // spin phone + wallet as one object
+  tick();
+  controls.update();
+  renderer.render(scene,camera);
+  if(!started){ started=true; setTimeout(()=>loader.classList.add('hide'),250); }
+}
+loop();
+</script>
+</body>
+</html>
