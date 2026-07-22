@@ -7,10 +7,11 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import s from './intro.module.css'
 import { buildMasterTimeline, type TimelineRefs } from './master-timeline'
 import { ReducedMotionIntro } from './ReducedMotionIntro'
-import { INTRO_LINES, INTRO_STEPS, SCROLL_CUE, SKIP_LABEL } from '@/content/copy'
+import { INTRO_LINES, INTRO_STEPS, SCROLL_CUE, SKIP_LABEL, VALUE_PROP } from '@/content/copy'
 import { useScrollLock } from '@/lib/use-scroll-lock'
 import { startLenis } from '@/lib/lenis'
 import { resetSceneState } from '@/lib/scene-state'
+import { voiceover } from '@/lib/voiceover'
 
 // The WebGL stage is the largest chunk on the page and is useless on the
 // server, so it is split out and loaded on the client only.
@@ -38,6 +39,7 @@ export function IntroSequence({ onUnlock }: { onUnlock: () => void }) {
   const stepEls = useRef<(HTMLElement | null)[]>([])
   const tlRef = useRef<gsap.core.Timeline | null>(null)
 
+  const [sound, setSound] = useState(true)
   const [mode, setMode] = useState<'pending' | 'full' | 'reduced' | 'fallback'>('pending')
   const [finished, setFinished] = useState(false)
 
@@ -84,6 +86,27 @@ export function IntroSequence({ onUnlock }: { onUnlock: () => void }) {
   // down and rebuild the timeline it was called from.
   const unlockRef = useRef(unlock)
   unlockRef.current = unlock
+
+  // Create the audio elements ahead of the first cue so nothing lags. Missing
+  // files are fine — those cues simply do nothing.
+  useEffect(() => {
+    if (mode !== 'full') return
+    voiceover.preload([...INTRO_LINES.map((l) => l.id), 'steps'])
+    // Sound defaults on, but the browser may refuse until the user interacts;
+    // see the note in lib/voiceover.ts.
+    setSound(voiceover.loadPreference())
+    voiceover.setTimeSource(() => tlRef.current?.time() ?? 0)
+    voiceover.armOnFirstGesture()
+    return () => voiceover.stopAll()
+  }, [mode])
+
+  const toggleSound = useCallback(() => {
+    setSound((on) => {
+      const next = !on
+      voiceover.setEnabled(next)
+      return next
+    })
+  }, [])
 
   useLayoutEffect(() => {
     if (mode !== 'full') return
@@ -154,6 +177,7 @@ export function IntroSequence({ onUnlock }: { onUnlock: () => void }) {
   }, [mode, finished])
 
   const skip = useCallback(() => {
+    voiceover.stopAll()
     const tl = tlRef.current
     if (tl) {
       // Jump to the end state exactly — same frame the sequence would have
@@ -180,7 +204,7 @@ export function IntroSequence({ onUnlock }: { onUnlock: () => void }) {
           <p style={{ fontSize: 'var(--step-2)', fontWeight: 600, maxWidth: '20ch' }}>
             {INTRO_LINES[0].text}
           </p>
-          <p style={{ color: 'var(--muted)', maxWidth: '46ch' }}>{INTRO_LINES[6].text}</p>
+          <p style={{ color: 'var(--muted)', maxWidth: '46ch' }}>{VALUE_PROP}</p>
           <button className={s.skip} onClick={unlock} style={{ justifySelf: 'center' }}>
             Continue
           </button>
@@ -210,9 +234,22 @@ export function IntroSequence({ onUnlock }: { onUnlock: () => void }) {
       <div className={s.ui} ref={ui}>
         <div className={s.topRow}>
           <span className={s.mark}>Wipely</span>
-          <button className={s.skip} onClick={skip} type="button">
-            {SKIP_LABEL}
-          </button>
+          <div className={s.controls}>
+            {/* Sound starts off: the brief requires it, and browsers block
+                autoplay with audio until a real gesture anyway. This button is
+                that gesture. */}
+            <button
+              className={s.skip}
+              onClick={toggleSound}
+              type="button"
+              aria-pressed={sound}
+            >
+              {sound ? 'Sound on' : 'Sound off'}
+            </button>
+            <button className={s.skip} onClick={skip} type="button">
+              {SKIP_LABEL}
+            </button>
+          </div>
         </div>
 
         <div className={s.copy}>

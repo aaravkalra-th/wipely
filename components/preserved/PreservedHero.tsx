@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import s from './preserved.module.css'
+import { createDispenser } from './dispenser'
 
 /**
  * THE PRESERVED SECTION.
@@ -26,16 +27,16 @@ export function PreservedHero() {
   const mount = useRef<HTMLDivElement>(null)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
-  const [ring, setRing] = useState(false)
+  const [lid, setLid] = useState(false)
   const [wipe, setWipe] = useState(false)
-  const [variant, setVariant] = useState(1)
+  const [stand, setStand] = useState(false)
 
   // The imperative scene keeps its own handles so React state can drive it
   // without rebuilding anything.
   const api = useRef<{
-    setRing(v: boolean): void
+    setLid(v: boolean): void
     setWipe(v: boolean): void
-    setVariant(v: number): void
+    setStand(v: boolean): void
   } | null>(null)
 
   useEffect(() => {
@@ -240,236 +241,50 @@ export function PreservedHero() {
 
     const PHONE_BACK_Y = phone.position.y + PD / 2
 
-    const wallet = new THREE.Group()
-    wallet.rotation.x = -Math.PI / 2
-
-    const WAL_W = 1.18
-    const WAL_H = 1.74
-    const CORNER = 0.17
-    const T_PANEL = 0.028
-    const VARIANTS = [0.06, 0.1, 0.15]
-    let baseT = VARIANTS[1]
-
-    const matWallet = new THREE.MeshPhysicalMaterial({
-      color: 0x9db9e6,
-      metalness: 0.0,
-      roughness: 0.62,
-      sheen: 0.6,
-      sheenRoughness: 0.5,
-      sheenColor: new THREE.Color(0xdbe6ff),
-      clearcoat: 0.15,
-      clearcoatRoughness: 0.5,
-    })
-    const matSheet = new THREE.MeshPhysicalMaterial({
-      color: 0xfcfdff,
-      metalness: 0,
-      roughness: 0.9,
-      sheen: 0.5,
-      sheenRoughness: 0.7,
-      sheenColor: new THREE.Color(0xffffff),
-      side: THREE.DoubleSide,
-    })
-
-    function roundedRectGeo(rw: number, rh: number, r: number) {
-      const sh = new THREE.Shape()
-      const x = -rw / 2
-      const y = -rh / 2
-      sh.moveTo(x + r, y)
-      sh.lineTo(x + rw - r, y)
-      sh.quadraticCurveTo(x + rw, y, x + rw, y + r)
-      sh.lineTo(x + rw, y + rh - r)
-      sh.quadraticCurveTo(x + rw, y + rh, x + rw - r, y + rh)
-      sh.lineTo(x + r, y + rh)
-      sh.quadraticCurveTo(x, y + rh, x, y + rh - r)
-      sh.lineTo(x, y + r)
-      sh.quadraticCurveTo(x, y, x + r, y)
-      return new THREE.ShapeGeometry(sh, 16)
-    }
-
-    function pocketShape(pw: number, ph: number, r: number, scoop: number) {
-      const sh = new THREE.Shape()
-      const x = -pw / 2
-      const y = -ph / 2
-      sh.moveTo(x + r, y)
-      sh.lineTo(x + pw - r, y)
-      sh.quadraticCurveTo(x + pw, y, x + pw, y + r)
-      sh.lineTo(x + pw, y + ph - r)
-      sh.quadraticCurveTo(x + pw, y + ph, x + pw - r, y + ph)
-      sh.quadraticCurveTo(0, y + ph - scoop, x + r, y + ph)
-      sh.quadraticCurveTo(x, y + ph, x, y + ph - r)
-      sh.lineTo(x, y + r)
-      sh.quadraticCurveTo(x, y, x + r, y)
-      return sh
-    }
-
-    function extrudeFlat(shape: THREE.Shape, depth: number) {
-      // FIX 1 applies here too: the front pocket asked for 0.028 and rendered
-      // 0.052.
-      const b = Math.min(0.012, depth * 0.22)
-      const core = Math.max(depth - b * 2, 0.001)
-      const g = new THREE.ExtrudeGeometry(shape, {
-        depth: core,
-        bevelEnabled: true,
-        bevelThickness: b,
-        bevelSize: b,
-        bevelSegments: 2,
-        steps: 1,
-      })
-      g.translate(0, 0, -core / 2)
-      g.computeVertexNormals()
-      return g
-    }
-
-    const backPanel = new THREE.Mesh(roundedBox(WAL_W, WAL_H, T_PANEL, CORNER), matWallet)
-    backPanel.castShadow = backPanel.receiveShadow = true
-    wallet.add(backPanel)
-
-    const NSHEET = 5
-    const FP_H = WAL_H - 0.16
-    const sheetGeo = roundedRectGeo(WAL_W - 0.22, FP_H + 0.06, CORNER * 0.7)
-    const sheets: THREE.Mesh[] = []
-    for (let i = 0; i < NSHEET; i++) {
-      const sh = new THREE.Mesh(sheetGeo, matSheet)
-      wallet.add(sh)
-      sheets.push(sh)
-    }
-
-    const frontPanel = new THREE.Mesh(
-      extrudeFlat(pocketShape(WAL_W, FP_H, CORNER, 0.26), T_PANEL),
-      matWallet
-    )
-    frontPanel.position.y = -0.02
-    frontPanel.castShadow = frontPanel.receiveShadow = true
-    wallet.add(frontPanel)
-
-    const logoTex = logoTexture()
-    const brand = new THREE.Mesh(
-      new THREE.CircleGeometry(0.115, 48),
-      new THREE.MeshStandardMaterial({
-        map: logoTex,
-        transparent: true,
-        metalness: 0.0,
-        roughness: 0.6,
-      })
-    )
-    brand.position.y = -0.56
-    wallet.add(brand)
-
-    const MOUTH_Y = -0.02 + FP_H / 2 - 0.13
-
-    const PSW = WAL_W - 0.26
-    const PSL = 1.05
-    const pullGeo = new THREE.PlaneGeometry(PSW, PSL, 6, 22)
-    const pullSheet = new THREE.Mesh(pullGeo, matSheet)
-    pullSheet.castShadow = true
-    const ppos = pullGeo.attributes.position
-    const pbase = new Float32Array(ppos.count * 3)
-    for (let i = 0; i < ppos.count; i++) {
-      pbase[i * 3] = ppos.getX(i)
-      pbase[i * 3 + 1] = ppos.getY(i)
-      pbase[i * 3 + 2] = ppos.getZ(i)
-    }
-    const pullPivot = new THREE.Group()
-    pullPivot.add(pullSheet)
-    wallet.add(pullPivot)
-
-    const stand = new THREE.Group()
-    // FIX 3 — the leaf is centred on its own hinge. The original placed it at
-    // WAL_H*0.19 with a half-height of WAL_H*0.21, so 0.035 of it hung below
-    // the hinge and poked through the back of the wallet at rest.
-    const STAND_H = WAL_H * 0.42
-    const standLeaf = new THREE.Mesh(roundedBox(WAL_W * 0.82, STAND_H, 0.016, CORNER * 0.8), matWallet)
-    standLeaf.castShadow = true
-    standLeaf.position.y = STAND_H / 2
-    stand.add(standLeaf)
-    wallet.add(stand)
-
-    assembly.add(wallet)
-
-    function placeWallet() {
-      wallet.position.set(0, PHONE_BACK_Y + baseT / 2, 0.34)
-    }
-    placeWallet()
-
-    const state = {
-      ring: { on: false, v: 0 },
-      wipe: { on: false, v: 0 },
-      variant: { cur: 1, h: VARIANTS[1], target: VARIANTS[1] },
-      autorotate: true,
-    }
+    /*
+     * The dispenser, remodelled from the product render: a black case with a
+     * raised pod, a rounded-rectangle aperture, and a flap that is both the lid
+     * and the kickstand. Replaces the earlier blue wallet pad — see
+     * ./dispenser.ts for the geometry and why one hinge does two jobs.
+     */
+    const dispenser = createDispenser(PW, PH)
+    dispenser.group.rotation.x = -Math.PI / 2
+    dispenser.group.position.set(0, PHONE_BACK_Y + 0.035, 0)
+    assembly.add(dispenser.group)
 
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
-    function updatePull(out: number) {
-      pullSheet.visible = out > 0.02
-      if (!pullSheet.visible) return
-      const len = PSL * lerp(0.12, 1, out)
-      // FIX 4 — the total curl is reduced from ~135 degrees to ~112 so the free
-      // end of the sheet stays clear of the camera module instead of arcing
-      // back down through it.
-      const k = 1.95 / PSL
-      for (let i = 0; i < ppos.count; i++) {
-        const bx = pbase[i * 3]
-        const by = pbase[i * 3 + 1]
-        const v = (by + PSL / 2) / PSL
-        const a = k * v * len
-        ppos.setXYZ(i, bx * (1 - 0.05 * v), Math.sin(a) / k, (1 - Math.cos(a)) / k)
-      }
-      ppos.needsUpdate = true
-      pullGeo.computeVertexNormals()
-      pullPivot.position.set(0, MOUTH_Y, baseT / 2 + 0.006)
+    const state = {
+      lid: { on: false, v: 0 },
+      wipe: { on: false, v: 0 },
+      stand: { on: false, v: 0 },
+      autorotate: true,
     }
 
     function tick() {
-      state.variant.h = lerp(state.variant.h, state.variant.target, 0.16)
-      baseT = state.variant.h
-      placeWallet()
+      state.lid.v = lerp(state.lid.v, state.lid.on ? 1 : 0, 0.14)
+      state.wipe.v = lerp(state.wipe.v, state.wipe.on ? 1 : 0, 0.12)
+      state.stand.v = lerp(state.stand.v, state.stand.on ? 1 : 0, 0.12)
 
-      backPanel.position.z = -baseT / 2 + T_PANEL / 2
-      frontPanel.position.z = baseT / 2 - T_PANEL / 2
-      // FIX 5 — the brand mark used to sit at baseT/2 + 0.004, which is inside
-      // the folded stand leaf, so the logo was never visible. The stand is now
-      // recessed behind the front shell when folded (see FIX 6), and the mark
-      // sits just proud of the pocket face where it was always meant to be.
-      brand.position.z = baseT / 2 + 0.004
+      dispenser.setLid(state.lid.v)
+      dispenser.setWipe(state.wipe.v)
+      dispenser.setStand(state.stand.v)
+      dispenser.update()
 
-      // FIX 6 — the sheet stack span is clamped so it cannot invert. On the
-      // Ultra-Slim variant the original produced a range running from +0.002 to
-      // -0.002: reversed, and with both ends buried inside the shells.
-      const innerBack = -baseT / 2 + T_PANEL
-      const innerFront = baseT / 2 - T_PANEL
-      const span = Math.max(innerFront - innerBack, 0.004)
-      const pad = Math.min(0.004, span * 0.2)
-      for (let i = 0; i < NSHEET; i++) {
-        const f = NSHEET > 1 ? i / (NSHEET - 1) : 0
-        sheets[i].position.set(0, -0.02 - f * 0.008, innerBack + pad + f * (span - pad * 2))
-      }
-
-      state.ring.v = lerp(state.ring.v, state.ring.on ? 1 : 0, 0.14)
-      // FIX 6b — folded, the leaf sits just behind the front shell rather than
-      // on top of it, so it no longer covers the pocket face and the logo. It
-      // swings clear of the body as it deploys, exactly as before.
-      stand.position.set(
-        0,
-        -WAL_H / 2 + 0.05,
-        lerp(baseT / 2 - 0.014, baseT / 2 + 0.02, state.ring.v)
-      )
-      stand.rotation.x = state.ring.v * 1.2
-
-      state.wipe.v = lerp(state.wipe.v, state.wipe.on ? 1 : 0, 0.1)
-      updatePull(state.wipe.v)
+      // Standing tips the whole assembly back onto the deployed flap, which is
+      // the pose in the product render.
+      assembly.rotation.x = state.stand.v * 0.2
     }
 
     api.current = {
-      setRing: (v) => {
-        state.ring.on = v
+      setLid: (v) => {
+        state.lid.on = v
       },
       setWipe: (v) => {
         state.wipe.on = v
       },
-      setVariant: (v) => {
-        state.variant.cur = v
-        state.variant.target = VARIANTS[v]
+      setStand: (v) => {
+        state.stand.on = v
       },
     }
 
@@ -504,19 +319,37 @@ export function PreservedHero() {
     const io = new IntersectionObserver(([e]) => (onScreen = e.isIntersecting), { threshold: 0 })
     io.observe(app)
 
+    const drawFrame = () => {
+      tick()
+      controls.update()
+      renderer.render(scene, camera)
+    }
+
+    /*
+     * Draw one frame synchronously before the loop starts.
+     *
+     * The loop skips rendering while the tab is hidden or the section is
+     * scrolled away, which is right for battery — but it also used to skip the
+     * flag that clears the loader, and requestAnimationFrame is throttled to
+     * nothing on a background tab. Loading the page in a background tab
+     * therefore left "Preparing Wipely…" on screen indefinitely. One frame up
+     * front costs nothing and guarantees a correct first paint.
+     */
+    drawFrame()
+    setTimeout(() => setReady(true), 250)
+
+    // Dev hook: force a frame when the environment throttles rAF, so the
+    // viewer can be inspected without a visible, focused tab.
+    if (process.env.NODE_ENV !== 'production') {
+      ;(window as unknown as { __preservedDraw?: () => void }).__preservedDraw = drawFrame
+    }
+
     let raf = 0
-    let started = false
     const loop = () => {
       raf = requestAnimationFrame(loop)
       if (document.hidden || !onScreen) return
       if (state.autorotate) assembly.rotation.y += 0.0035
-      tick()
-      controls.update()
-      renderer.render(scene, camera)
-      if (!started) {
-        started = true
-        setTimeout(() => setReady(true), 250)
-      }
+      drawFrame()
     }
     loop()
 
@@ -535,8 +368,8 @@ export function PreservedHero() {
           else m.dispose()
         }
       })
-      logoTex.dispose()
       envRT.texture.dispose()
+      dispenser.dispose()
       renderer.dispose()
       if (renderer.domElement.parentNode === app) app.removeChild(renderer.domElement)
       api.current = null
@@ -544,14 +377,14 @@ export function PreservedHero() {
   }, [])
 
   useEffect(() => {
-    api.current?.setRing(ring)
-  }, [ring])
+    api.current?.setLid(lid)
+  }, [lid])
   useEffect(() => {
     api.current?.setWipe(wipe)
   }, [wipe])
   useEffect(() => {
-    api.current?.setVariant(variant)
-  }, [variant])
+    api.current?.setStand(stand)
+  }, [stand])
 
   return (
     <section className={s.wrap} id="viewer" aria-label="Wipely product viewer">
@@ -583,14 +416,17 @@ export function PreservedHero() {
       </div>
 
       <div className={s.dock}>
+        {/* The three things the product actually does. Replaces the old
+            stand/peel pair and the variant selector, which described the
+            earlier pad rather than this case. */}
         <div className={s.actions}>
           <button
-            className={`${s.pill} ${ring ? s.on : ''}`}
-            onClick={() => setRing((v) => !v)}
-            aria-pressed={ring}
+            className={`${s.pill} ${lid ? s.on : ''}`}
+            onClick={() => setLid((v) => !v)}
+            aria-pressed={lid}
           >
             <span className={s.dot} />
-            Flip-out stand
+            {lid ? 'Close case' : 'Open case'}
           </button>
           <button
             className={`${s.pill} ${wipe ? s.on : ''}`}
@@ -598,23 +434,16 @@ export function PreservedHero() {
             aria-pressed={wipe}
           >
             <span className={s.dot} />
-            Peel a sheet
+            Pull out a wipe
           </button>
-        </div>
-        <div className={s.seg} role="radiogroup" aria-label="Variant">
-          {['Ultra-Slim', 'Standard', 'Moisture-Lock'].map((label, i) => (
-            <div key={label} style={{ display: 'contents' }}>
-              {i > 0 && <div className={s.div} />}
-              <button
-                className={variant === i ? s.on : ''}
-                onClick={() => setVariant(i)}
-                role="radio"
-                aria-checked={variant === i}
-              >
-                {label}
-              </button>
-            </div>
-          ))}
+          <button
+            className={`${s.pill} ${stand ? s.on : ''}`}
+            onClick={() => setStand((v) => !v)}
+            aria-pressed={stand}
+          >
+            <span className={s.dot} />
+            Stand
+          </button>
         </div>
         <div className={s.hint}>
           Drag to rotate · scroll to zoom · <kbd>R</kbd> reset

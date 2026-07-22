@@ -42,7 +42,7 @@ export const PRODUCT_ROTATE_MAX_DEG = 26
  * sheet is drawn across it. That beat is the whole product argument, so the
  * extra four seconds buy something; noted here rather than left as drift.
  */
-export const INTRO_DURATION = 24
+export const INTRO_DURATION = 29
 
 /** Named labels on the master timeline, in order, with their start times. */
 export const LABELS = {
@@ -54,8 +54,8 @@ export const LABELS = {
   'transfer-germs': 13,
   'product-reveal': 15.4,
   'wipe-demo': 17.6,
-  'product-explanation': 21.6,
-  'unlock-scroll': 23.2,
+  'product-explanation': 19.1,
+  'unlock-scroll': 28.0,
 } as const
 
 export type LabelName = keyof typeof LABELS

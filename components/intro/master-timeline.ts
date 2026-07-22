@@ -2,6 +2,7 @@ import gsap from 'gsap'
 import { sceneState, type SceneState } from '@/lib/scene-state'
 import { COPY_IN, COPY_OUT, COPY_RISE, EASE, deg } from '@/lib/motion'
 import { INTRO_LINES } from '@/content/copy'
+import { voiceover } from '@/lib/voiceover'
 
 /**
  * The master timeline.
@@ -51,6 +52,14 @@ export function buildMasterTimeline(refs: TimelineRefs, onLabel?: (l: string) =>
   const { cam, env, hands, germs, water, phone, product, person } = sceneState
 
   const addLine = (id: string, at: number, out: number) => {
+    /*
+     * The voiceover cue sits on the timeline next to the copy it narrates, so
+     * the two can never drift: retiming a line moves its audio with it. Cues
+     * fire whether or not the element exists, and are no-ops when sound is off
+     * or the clip has not been recorded.
+     */
+    tl.call(() => voiceover.play(id), undefined, at)
+
     const el = refs.lines[id]
     if (!el) return
     tl.fromTo(
@@ -383,50 +392,63 @@ export function buildMasterTimeline(refs: TimelineRefs, onLabel?: (l: string) =>
   tl.to(product, { px: -0.24, py: 1.24, pz: 0.34, duration: 1.0, ease: EASE.camera }, 17.6)
   camTo(tl, 17.6, 1.2, { px: 0.05, py: 1.36, pz: 1.42, tx: 0.02, ty: 1.24, tz: 0.36, fov: 38 })
 
-  // a sheet is drawn from the pad and swept across the glass
-  tl.to(product, { peel: 1, duration: 0.7, ease: 'power2.out' }, 18.5)
-  tl.fromTo(product, { wipe: 0 }, { wipe: 1, duration: 1.5, ease: 'power1.inOut' }, 19.0)
-  tl.fromTo(germs, { wiped: 0 }, { wiped: 1, duration: 1.9, ease: 'none' }, 19.05)
-
-  // clean phone, clean hands, held for a beat
-  tl.to(phone, { present: 0, duration: 0.01 }, 21.4)
-  tl.to(germs, { onHand: 0, onPhone: 0, duration: 0.01 }, 21.45)
-  tl.to(product, { peel: 0.5, px: 0, py: 1.25, pz: 0, duration: 1.0, ease: EASE.camera }, 21.0)
-
   /* ================================================================ */
-  tl.addLabel('product-explanation', 21.6)
-  tl.call(() => onLabel?.('product-explanation'), undefined, 21.6)
+  /*
+   * The three mechanism steps are ONE 8.45s recording, not three, so the visuals
+   * are cut to the narration rather than the other way round: the sheet is
+   * peeled while "peel a sheet" is spoken, the sweep happens on "wipe the
+   * screen and the back", and the clean hold lands on "start fresh".
+   *
+   * Word-count proportions across the clip put the three sentences at roughly
+   * +0.0s, +3.3s and +5.9s, which is where the step text and each visual beat
+   * are placed.
+   */
+  tl.addLabel('product-explanation', 19.1)
+  tl.call(() => onLabel?.('product-explanation'), undefined, 19.1)
+  tl.call(() => voiceover.play('steps'), undefined, 19.1)
 
-  // The mechanism, shown rather than claimed: a sheet drawn from the pocket.
-  tl.to(product, { peel: 1, duration: 1.2, ease: 'power2.out' }, 21.65)
-  camTo(tl, 21.6, 1.4, { px: 0.02, py: 1.42, pz: 2.42, tx: 0, ty: 1.25, tz: 0, fov: 32 })
+  // "Peel a sheet from the pad on your phone."
+  tl.to(product, { peel: 1, duration: 0.9, ease: 'power2.out' }, 19.2)
+  camTo(tl, 19.1, 1.2, { px: 0.05, py: 1.36, pz: 1.34, tx: 0.02, ty: 1.24, tz: 0.36, fov: 38 })
 
+  // "Wipe the screen and the back."
+  tl.fromTo(product, { wipe: 0 }, { wipe: 1, duration: 2.0, ease: 'power1.inOut' }, 22.4)
+  tl.fromTo(germs, { wiped: 0 }, { wiped: 1, duration: 2.4, ease: 'none' }, 22.45)
+
+  // "Start fresh without changing your routine." — clean phone, clean hands
+  tl.to(phone, { present: 0, duration: 0.01 }, 25.2)
+  tl.to(germs, { onHand: 0, onPhone: 0, duration: 0.01 }, 25.25)
+  tl.to(product, { peel: 0.6, px: 0, py: 1.25, pz: 0, duration: 1.2, ease: EASE.camera }, 25.0)
+  camTo(tl, 25.0, 1.6, { px: 0.02, py: 1.42, pz: 2.42, tx: 0, ty: 1.25, tz: 0, fov: 32 })
+
+  // offsets into the 8.45s clip where each sentence begins
+  const STEP_AT = [19.1, 22.4, 25.0]
   refs.steps.forEach((el, i) => {
     if (!el) return
     tl.fromTo(
       el,
       { autoAlpha: 0, y: COPY_RISE * 0.8 },
       { autoAlpha: 1, y: 0, duration: 0.7, ease: EASE.copy },
-      21.75 + i * 0.42
+      STEP_AT[i]
     )
   })
 
   /* ================================================================ */
-  tl.addLabel('unlock-scroll', 23.2)
-  tl.call(() => onLabel?.('unlock-scroll'), undefined, 23.2)
+  tl.addLabel('unlock-scroll', 28.0)
+  tl.call(() => onLabel?.('unlock-scroll'), undefined, 28.0)
 
   // Settle into the framing the preserved section opens on: the same raised
   // three-quarter angle, so the handoff reads as one continuous camera.
-  tl.to(product, { peel: 0.5, rx: deg(21), ry: deg(7), duration: 1.1, ease: EASE.camera }, 22.9)
-  camTo(tl, 22.9, 1.1, { px: 0.15, py: 1.42, pz: 0.33, tx: 0, ty: 1.25, tz: 0, fov: 32 })
-  tl.to(sceneState, { handoff: 1, duration: 0.9, ease: EASE.material }, 23.0)
+  tl.to(product, { peel: 0.5, rx: deg(21), ry: deg(7), duration: 1.1, ease: EASE.camera }, 27.7)
+  camTo(tl, 27.7, 1.1, { px: 0.15, py: 1.42, pz: 0.33, tx: 0, ty: 1.25, tz: 0, fov: 32 })
+  tl.to(sceneState, { handoff: 1, duration: 0.9, ease: EASE.material }, 27.8)
 
   if (refs.cue) {
     tl.fromTo(
       refs.cue,
       { autoAlpha: 0, y: 12 },
       { autoAlpha: 1, y: 0, duration: 0.7, ease: EASE.copy },
-      23.5
+      28.3
     )
   }
 

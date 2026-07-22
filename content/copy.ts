@@ -38,35 +38,57 @@ export interface IntroLine {
 
 export const INTRO_LINES: IntroLine[] = [
   // Scene 1 — returning home. Supplied verbatim.
-  { id: 'l1', text: 'You bring more home than you realize.', in: 0.9, out: 3.0, status: 'approved' },
+  /*
+   * Timed to the recording, not to reading speed: l1.mp3 runs 2.78s, so cued at
+   * 0.9 it finishes at 3.68. The line stays up until then, and l2 waits until
+   * after that — otherwise the two clips talk over each other.
+   */
+  { id: 'l1', text: 'You bring more home than you realize.', in: 0.9, out: 3.72, status: 'approved' },
 
   // Scene 2 — contaminated hands. Supplied verbatim.
   {
     id: 'l2',
     text: 'Washing your hands removes what you picked up outside.',
-    in: 3.5,
-    out: 6.0,
+    in: 3.85,
+    // l2.mp3 runs 3.86s, so it ends at 7.71 — the line has to outlast it.
+    // Running past the wash starting at 6.0 is fine, and arguably better: the
+    // narration is about washing and the wash is what you are watching.
+    out: 7.8,
     status: 'approved',
   },
 
   // Scene 3 — handwashing resolves. Supplied verbatim.
-  { id: 'l3', text: 'Clean hands. Problem solved?', in: 9.5, out: 10.9, status: 'approved' },
+  /*
+   * l3.mp3 runs 2.76s, so cued at 9.5 it ends at 12.26 — which pushes l4 past
+   * the contact at 12.5. That lands well ("Then you touch your phone" now
+   * speaks over the touch), but it does eat the 0.6-0.8s of silence the brief
+   * wanted after this line. Flagged for the full refit once every clip is in.
+   */
+  { id: 'l3', text: 'Clean hands. Problem solved?', in: 9.5, out: 12.35, status: 'approved' },
 
   // Scene 4 — the phone. Both supplied verbatim.
-  { id: 'l4', text: 'Then you touch your phone.', in: 11.3, out: 13.6, status: 'approved' },
-  { id: 'l5', text: 'And put it all back.', in: 14.0, out: 15.4, status: 'approved' },
+  { id: 'l4', text: 'Then you touch your phone.', in: 12.45, out: 15.0, status: 'approved' },
+  /*
+   * Moved from 14.0 to clear l4, which now runs to 14.66. This is closer to the
+   * brief anyway: it asks for this line to land only after the contamination
+   * has visibly returned, and the transfer runs 12.9-14.9.
+   */
+  { id: 'l5', text: 'And put it all back.', in: 14.85, out: 16.95, status: 'approved' },
 
+  /*
+   * NOTE: the one-sentence value proposition that the brief specifies after
+   * "Meet Wipely." has been removed from the introduction at the client's
+   * request — the three mechanism steps carry the explanation instead. The
+   * sentence still exists in SECTIONS.solution for the page below.
+   */
   // Scene 6 — product reveal.
-  { id: 'l6', text: `Meet ${PRODUCT_NAME}.`, in: 16.0, out: 17.5, status: 'approved' },
-  {
-    id: 'l7',
-    // Value proposition. Describes form factor and user action only.
-    text: 'A flat pad of wipes that sticks to the back of your phone, so the thing you touch most is never far from a fresh sheet.',
-    in: 18.6,
-    out: 21.3,
-    status: 'mechanism',
-    sub: true,
-  },
+  /*
+   * Pushed from 16.0 to clear l5, which runs to 16.87. It now lands 1.65s into
+   * the reveal rather than at its start — which works: the silhouette resolves
+   * into material between 15.8 and 17.6, so the name arrives as the product
+   * becomes readable rather than while it is still a dark shape.
+   */
+  { id: 'l6', text: `Meet ${PRODUCT_NAME}.`, in: 17.05, out: 18.9, status: 'approved' },
 ]
 
 /**
@@ -80,6 +102,18 @@ export const INTRO_STEPS: { text: string; status: CopyStatus }[] = [
   { text: 'Start fresh without changing your routine.', status: 'approved' },
 ]
 
+/**
+ * The one-sentence description. No longer spoken in the introduction — the
+ * three mechanism steps carry that — but still needed by the reduced-motion and
+ * no-WebGL paths, where the brief requires the product to be explained as plain
+ * text without any animation.
+ */
+export const VALUE_PROP =
+  'A flat pad of wipes that sticks to the back of your phone, so the thing you touch most is never far from a fresh sheet.'
+
+/** Look a line up by id. Indexing INTRO_LINES breaks whenever a line is cut. */
+export const lineById = (id: string) => INTRO_LINES.find((l) => l.id === id)
+
 export const SCROLL_CUE = 'Scroll to explore'
 export const SKIP_LABEL = 'Skip introduction'
 
@@ -91,7 +125,7 @@ export const REDUCED_STATES = [
   { label: 'Outside', text: 'You pick things up on the way home.' },
   { label: 'Washed', text: 'Washing your hands removes what you picked up outside.' },
   { label: 'Phone', text: 'Then you touch your phone, and put it all back.' },
-  { label: PRODUCT_NAME, text: INTRO_LINES[6].text },
+  { label: PRODUCT_NAME, text: VALUE_PROP },
 ]
 
 /* ------------------------------------------------------------------ */

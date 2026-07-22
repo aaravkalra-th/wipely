@@ -228,3 +228,10 @@
     font-size: var(--step-1);
   }
 }
+
+/* sound + skip, grouped top-right */
+.controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
