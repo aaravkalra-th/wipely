@@ -6,6 +6,7 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { sceneState } from '@/lib/scene-state'
+import { asset } from '@/lib/asset-path'
 
 /**
  * The person who comes home.
@@ -39,7 +40,7 @@ import { sceneState } from '@/lib/scene-state'
  *    correcting bones at runtime.
  */
 
-const MODEL = '/models/person.glb'
+const MODEL = asset('/models/person.glb')
 const TARGET_HEIGHT = 1.75
 const WALK_CLIP = 'HumanArmature|Man_Walk'
 

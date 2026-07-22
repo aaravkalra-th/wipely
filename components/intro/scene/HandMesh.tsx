@@ -5,6 +5,7 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { M } from './materials'
 import type { HandAnchor, AnchorRegion } from './Hand'
+import { asset } from '@/lib/asset-path'
 
 /**
  * The hand.
@@ -38,7 +39,7 @@ import type { HandAnchor, AnchorRegion } from './Hand'
  * offsets, so contamination sits exactly on the surface.
  */
 
-const MODEL = '/models/hand.glb'
+const MODEL = asset('/models/hand.glb')
 
 /**
  * Longest dimension, in metres. The model includes a forearm, so this spans

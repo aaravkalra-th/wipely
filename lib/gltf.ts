@@ -5,6 +5,7 @@ import type { WebGLRenderer } from 'three'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js'
 import type { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { asset } from './asset-path'
 
 /**
  * Asset pipeline.
@@ -19,8 +20,8 @@ import type { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
  * Decoders are served from /public and fetched on demand, never bundled.
  */
 
-const DRACO_PATH = '/decoders/draco/'
-const KTX2_PATH = '/decoders/basis/'
+const DRACO_PATH = asset('/decoders/draco/')
+const KTX2_PATH = asset('/decoders/basis/')
 
 let draco: DRACOLoader | null = null
 let ktx2: KTX2Loader | null = null
