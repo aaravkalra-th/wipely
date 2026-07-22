@@ -1,0 +1,305 @@
+/*
+  The preserved section, unchanged.
+
+  Every value here is carried over verbatim from the original index.html. The
+  only edits are structural, and only the ones required to put a formerly
+  full-window, position:fixed document inside a scrolling page:
+
+    - `position: fixed` becomes `position: absolute`, scoped to `.wrap`
+    - `.wrap` carries the former `body` background and a 100svh height
+
+  No colour, size, weight, spacing, copy or arrangement has been altered.
+*/
+
+.wrap {
+  position: relative;
+  /* vh fallback first — see the note in intro.module.css */
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  color: #1d1d1f;
+  background: radial-gradient(1200px 800px at 70% -10%, #ffffff 0%, rgba(255, 255, 255, 0) 55%),
+    radial-gradient(1000px 900px at 15% 110%, #eef1f6 0%, rgba(238, 241, 246, 0) 60%),
+    linear-gradient(180deg, #f4f5f7, #e7e9ee);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  position: absolute;
+  inset: 0;
+}
+.app canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* ---- Top brand ---- */
+.brand {
+  position: absolute;
+  left: 32px;
+  top: 26px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  user-select: none;
+}
+.mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, #fff, #dfe3ea 60%, #c7ccd6);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 0 0 3px rgba(255, 255, 255, 0.6),
+    inset 0 0 0 4.5px #cfd4dd;
+  position: relative;
+}
+.mark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #6bb8ff, #0a84ff);
+}
+.name {
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.name small {
+  display: block;
+  font-weight: 400;
+  font-size: 11.5px;
+  color: #6e6e73;
+  letter-spacing: 0.01em;
+  margin-top: 1px;
+}
+
+/* ---- Headline (right) ---- */
+.lede {
+  position: absolute;
+  right: 34px;
+  top: 30px;
+  z-index: 5;
+  max-width: 330px;
+  text-align: right;
+  user-select: none;
+}
+.lede h2 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.lede p {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #6e6e73;
+}
+.stat {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.stat b {
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.stat span {
+  font-size: 12px;
+  color: #6e6e73;
+}
+
+/* ---- Bottom control dock ---- */
+.dock {
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  user-select: none;
+}
+.seg {
+  display: flex;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  padding: 4px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 6px 24px rgba(20, 25, 40, 0.1);
+}
+.seg button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #6e6e73;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+.seg button:hover {
+  color: #1d1d1f;
+}
+.seg button.on {
+  background: #fff;
+  color: #1d1d1f;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.div {
+  width: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 5px 3px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+.pill {
+  appearance: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 17px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #1d1d1f;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 6px 24px rgba(20, 25, 40, 0.1);
+  transition: 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pill:hover {
+  transform: translateY(-1px);
+}
+.pill.on {
+  background: #0a84ff;
+  color: #fff;
+  border-color: transparent;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+.pill.on .dot {
+  opacity: 1;
+}
+
+.hint {
+  font-size: 12px;
+  color: #6e6e73;
+  letter-spacing: 0.01em;
+}
+.hint kbd {
+  font: inherit;
+  font-size: 11px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  padding: 1px 6px;
+  color: #1d1d1f;
+}
+
+.caption {
+  position: absolute;
+  left: 32px;
+  bottom: 28px;
+  z-index: 5;
+  max-width: 210px;
+  user-select: none;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #6e6e73;
+}
+.caption b {
+  color: #1d1d1f;
+  font-weight: 600;
+}
+
+.loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  color: #6e6e73;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  transition: opacity 0.5s;
+  background: transparent;
+}
+.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+.spin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #0a84ff;
+  margin-right: 10px;
+  animation: sp 0.8s linear infinite;
+}
+@keyframes sp {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 760px) {
+  .lede {
+    left: 24px;
+    right: 24px;
+    top: auto;
+    /* nudged clear of the dock, which the original overlapped on short screens */
+    bottom: 176px;
+    max-width: none;
+    text-align: left;
+  }
+  .lede h2 {
+    font-size: 24px;
+  }
+  .caption {
+    display: none;
+  }
+  .name small {
+    display: none;
+  }
+  .stat {
+    margin-top: 12px;
+  }
+}

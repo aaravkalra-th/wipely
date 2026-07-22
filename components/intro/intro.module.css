@@ -1,0 +1,230 @@
+/*
+  Normal flow, not fixed. ScrollTrigger's `pin` wraps this element in a
+  pin-spacer and manages its position itself; a position:fixed element cannot be
+  pinned, and collapses to a zero-height box when it is tried.
+
+  Scrolling is locked while the sequence plays, so a 100svh block at the top of
+  the document fills the viewport anyway.
+*/
+.root {
+  position: relative;
+  width: 100%;
+  /* vh first: browsers without svh support drop the declaration entirely, and
+     a zero-height container means R3F never initialises at all. */
+  height: 100vh;
+  height: 100svh;
+  z-index: 10;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+  A soft gradient along the bottom of the frame. It exists so the copy stays
+  legible over the mid-tone domestic set, and it is faded out entirely once the
+  studio lighting arrives and the frame goes light. It is a single linear
+  gradient, not a frosted panel.
+*/
+.scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* bottom: carries the copy. top: keeps the wordmark and skip control legible
+     against a brightly lit wall. */
+  background:
+    linear-gradient(to top, rgba(16, 18, 20, 0.74) 0%, rgba(16, 18, 20, 0) 52%),
+    linear-gradient(to bottom, rgba(16, 18, 20, 0.34) 0%, rgba(16, 18, 20, 0) 18%);
+}
+
+/* minimal DOM interface over the canvas */
+.ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: clamp(18px, 3.4vw, 40px);
+  /* starts light over the dark set, flips to ink at the product reveal */
+  color: var(--ink-invert);
+}
+
+/* thin progress indicator, top edge */
+.progressTrack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(29, 29, 31, 0.1);
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  width: 100%;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: var(--ink);
+  opacity: 0.45;
+  transition: opacity 0.25s ease, height 0.25s ease;
+}
+/* reinforced, briefly, when the user tries to scroll */
+.progressTrack[data-nudge='true'] .progressFill {
+  opacity: 1;
+}
+
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.mark {
+  font-size: var(--step-0);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: inherit;
+}
+
+.skip {
+  pointer-events: auto;
+  appearance: none;
+  border: 1px solid var(--line);
+  background: rgba(244, 245, 247, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--step--1);
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.skip:hover {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* copy block, lower left — editorial rather than centred hero text */
+.copy {
+  align-self: end;
+  max-width: min(46ch, 76vw);
+}
+
+.line {
+  font-size: var(--step-2);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  color: inherit;
+  opacity: 0;
+  visibility: hidden;
+  margin: 0;
+  position: absolute;
+  /* clears the sub-line beneath it at every viewport height */
+  bottom: clamp(104px, 17vh, 178px);
+  max-width: min(46ch, 76vw);
+  will-change: transform, opacity;
+}
+
+.sub {
+  font-size: var(--step-0);
+  font-weight: 400;
+  line-height: 1.5;
+  color: inherit;
+  opacity: 0.78;
+  letter-spacing: 0;
+  bottom: clamp(34px, 7vh, 74px);
+  max-width: min(52ch, 78vw);
+}
+
+/* the three mechanism steps */
+.steps {
+  position: absolute;
+  bottom: clamp(34px, 7vh, 74px);
+  left: clamp(18px, 3.4vw, 40px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.step {
+  opacity: 0;
+  visibility: hidden;
+  font-size: var(--step-0);
+  color: inherit;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  will-change: transform, opacity;
+}
+.stepNum {
+  font-size: var(--step--1);
+  color: inherit;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+  min-width: 2ch;
+}
+
+.cue {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(18px, 3vh, 30px);
+  transform: translateX(-50%);
+  opacity: 0;
+  visibility: hidden;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: var(--step--1);
+  color: inherit;
+  letter-spacing: 0.01em;
+}
+.cueArrow {
+  width: 1px;
+  height: 18px;
+  background: currentColor;
+  opacity: 0.5;
+  animation: drift 1.9s ease-in-out infinite;
+}
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(-3px);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(3px);
+    opacity: 0.6;
+  }
+}
+
+/* when the sequence is over the overlay stops intercepting anything */
+.done {
+  pointer-events: none;
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 14px;
+  padding: var(--gutter);
+  text-align: center;
+  background: var(--bg);
+}
+
+@media (max-width: 640px) {
+  .line {
+    font-size: var(--step-1);
+  }
+}
